@@ -1,0 +1,20 @@
+{
+  "name": "tera-cap",
+  "version": "1.0.0",
+  "description": "TERA Online Npcap sniffer based on tera-toolbox packet dispatcher",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon -e js,json index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cap-rbfork": "^0.2.1-a",
+    "colors": "^1.4.0",
+    "config": "^3.3.9",
+    "hexy": "^0.3.1",
+    "tera-crypto": "github:sasha5434/tera-crypto",
+    "tera-data-parser": "github:tera-proxy/tera-data-parser",
+    "raw-socket-sniffer": "github:Herysia/raw-socket-sniffer"
+  }
+}

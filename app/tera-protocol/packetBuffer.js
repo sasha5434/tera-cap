@@ -5,7 +5,7 @@ class PacketBuffer {
         this.out = [];
     }
 
-    write(data) {
+    async write(data) {
         // we'll chop off the front of `data` with each loop
         while (data.length > 0) {
             // if we have a buffer prepared, we should append to it first

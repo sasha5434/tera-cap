@@ -59,11 +59,11 @@ class Session {
         this.encryptor = getCrypto(t1)
     }
 
-    encrypt(data) {
+    async encrypt(data) {
         return this.encryptor.apply(data)
     }
 
-    decrypt(data) {
+    async decrypt(data) {
         return this.decryptor.apply(data)
     }
 

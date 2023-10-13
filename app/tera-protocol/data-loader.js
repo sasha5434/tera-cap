@@ -1,12 +1,12 @@
 const config = require("config");
 const path = require('path');
 const fs = require('fs');
+const parser = require('tera-data-parser')
+const {hasPadding} = require("./integrity");
 
 const dataFolder = path.join(__dirname, '../../', 'data');
-const modFolder = path.join(__dirname, '../../', 'mods');
 
 const metadata = {
-    dataFolder,
     protocolVersion: config.get('protocolVersion'),
     patchVersion: config.get('patchVersion'),
     maps: { protocol: {}, sysmsg: {} }
@@ -45,8 +45,36 @@ try {
     console.error(e);
 }
 
+// Initialize protocol maps
+const protocolMap = {
+    name: new Map(),
+    code: new Map(),
+    padding: (new Array(0x10000)).fill(false),
+};
+
+const latestDefVersion = new Map()
+
+// Opcode / Definition management
+function addOpcode(name, code, padding = false) {
+    protocolMap.name.set(name, code);
+    protocolMap.code.set(code, name);
+    protocolMap.padding[code] = padding;
+}
+
+Object.keys(metadata.maps.protocol).forEach(name => addOpcode(name, metadata.maps.protocol[name], hasPadding(metadata.protocolVersion, name)));
+
+// Initialize protocol
+const protocol = new parser.protocol(metadata.patchVersion, metadata.patchVersion, protocolMap);
+protocol.load(dataFolder);
+
+if (protocol.messages) {
+    for (const [name, defs] of protocol.messages) {
+        latestDefVersion.set(name, Math.max(...defs.keys()));
+    }
+}
+
 module.exports = {
-    dataFolder,
-    modFolder,
-    metadata
+    metadata,
+    protocol,
+    protocolMap
 };

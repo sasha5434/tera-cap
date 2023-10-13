@@ -5,10 +5,7 @@ function hooks (dispatch) {
         const hook = dispatch.hook(null, ...args);
         return hook;
     }
-    const mod = {
-        hook,
-        dispatch
-    }
+    const mod = { hook,dispatch }
     logger(mod)
 }
 

@@ -1,8 +1,6 @@
 const path = require('path')
 const util = require('util')
 const binarySearch = require('binary-search')
-const { protocol } = require('tera-data-parser')
-const { hasPadding } = require('./integrity');
 
 function* iterateHooks(globalHooks = [], codeHooks = []) {
     const globalHooksIterator = globalHooks[Symbol.iterator](); // .values()
@@ -90,94 +88,9 @@ function errStack(err = new Error(), removeFront = true) {
 
 class Dispatch {
     constructor(connection) {
-        this.connection = connection;
-
-        // Initialize protocol maps
-        this.protocolMap = {
-            name: new Map(),
-            code: new Map(),
-            padding: (new Array(0x10000)).fill(false),
-        };
-
-        Object.keys(this.connection.metadata.maps.protocol).forEach(name => this.addOpcode(name, this.connection.metadata.maps.protocol[name], hasPadding(this.connection.metadata.protocolVersion, name)));
-
-        // Initialize sysmsg maps
-        this.sysmsgMap = {
-            name: new Map(),
-            code: new Map()
-        };
-
-        Object.keys(this.connection.metadata.maps.sysmsg).forEach(name => {
-            this.sysmsgMap.name.set(name, this.connection.metadata.maps.sysmsg[name]);
-            this.sysmsgMap.code.set(this.connection.metadata.maps.sysmsg[name], name);
-        });
-
-        // Initialize protocol
-        this.protocol = new protocol(this.connection.metadata.majorPatchVersion, this.connection.metadata.minorPatchVersion, this.protocolMap, this.connection.metadata.platform);
-        this.protocol.load(this.connection.metadata.dataFolder);
-
-        this.latestDefVersion = new Map();
-        if (this.protocol.messages) {
-            for (const [name, defs] of this.protocol.messages) {
-                this.latestDefVersion.set(name, Math.max(...defs.keys()));
-            }
-        }
-
-        // Initialize hooks
-        // hooks:
-        // { <code>:
-        //	 [ { <order>
-        //		 , hooks:
-        //			 [ { <name>, <code>, <definitionVersion>, <filter>, <order>, <moduleName>, <callback>, <resolvedIdentifier> }
-        //			 ]
-        //		 }
-        //	 ]
-        // }
-        this.hooks = new Map();
-    }
-
-    destructor() {
-        this.hooks.clear();
-    }
-
-    get protocolVersion() { return this.connection.metadata.protocolVersion; }
-
-    parseSystemMessage(message) {
-        if (message[0] !== '@') throw Error(`Invalid system message "${message}" (expected @)`)
-
-        const tokens = message.split('\v'),
-            id = tokens[0].substring(1),
-            name = id.includes(':') ? id : this.sysmsgMap.code.get(parseInt(id))
-
-        if (!name) throw Error(`Unmapped system message ${id} ("${message}")`)
-
-        const data = {}
-
-        for (let i = 2; i < tokens.length; i += 2) data[tokens[i - 1]] = tokens[i]
-
-        return { id: name, tokens: data }
-    }
-
-    buildSystemMessage(message, data) {
-        if (typeof message === 'string') message = { id: message, tokens: data }
-        else {
-            const type = message === null ? 'null' : typeof message
-
-            if (type !== 'object') throw TypeError(`Expected object or string, got ${type}`)
-            if (!message.id) throw Error('message.id is required')
-        }
-
-        const id = message.id.toString().includes(':') ? message.id : this.sysmsgMap.name.get(message.id)
-
-        if (!id) throw Error(`Unknown system message "${message.id}"`)
-
-        data = message.tokens
-
-        let str = '@' + id
-
-        for (let key in data) str += `\v${key}\v${data[key]}`
-
-        return str
+        this.protocol = connection.protocol
+        this.protocolMap = connection.protocolMap
+        this.hooks = new Map()
     }
 
     fromRaw(name, version, data) {
@@ -265,64 +178,6 @@ class Dispatch {
         const hook = this.createHook(...args);
         this.addHook(hook);
         return hook;
-    }
-
-    unhook(hook) {
-        if (!hook)
-            return;
-
-        if (!this.hooks.has(hook.code))
-            return;
-
-        const ordering = this.hooks.get(hook.code);
-        const group = ordering.find(o => o.order === hook.order);
-        if (group)
-            group.hooks = group.hooks.filter(h => h !== hook);
-    }
-
-    unhookModule(name) {
-        for (const orderings of this.hooks.values()) {
-            for (const ordering of orderings)
-                ordering.hooks = ordering.hooks.filter(hook => hook.moduleName !== name);
-        }
-    }
-
-    write(outgoing, name, version, data) {
-        if (!this.connection)
-            return false
-
-        if (Buffer.isBuffer(name)) {
-            // Note: even though handle() doesn't modify the original buffer at all,
-            // Note: we need to create a copy here because connection's sendServer()
-            // Note: and sendClient() encrypt the buffer in-place.
-            data = Buffer.from(name)
-        } else {
-            if (typeof version !== 'number' && typeof version !== 'string')
-                throw new Error(`[dispatch] write: version is required`)
-
-            if (version !== '*') {
-                const latest = this.latestDefVersion.get(name)
-                if (latest && version < latest) {
-                    log.debug([
-                        `[dispatch] write: ${getMessageName(this.protocolMap, name, version, name)} is not latest version (${latest})`,
-                        errStack(),
-                    ].join('\n'))
-                }
-            }
-
-            try {
-                data = this.protocol.write(this.protocol.resolveIdentifier(name, version), data)
-            } catch (e) {
-                throw new Error(`[dispatch] write: failed to generate ${getMessageName(this.protocolMap, name, version, name)}:\n${e}`);
-            }
-        }
-
-        data = this.handle(data, !outgoing, true)
-        if (data === false)
-            return false
-
-        this.connection[outgoing ? 'sendServer' : 'sendClient'](data)
-        return true
     }
 
     handle(data, incoming, fake = false) {
@@ -460,41 +315,7 @@ class Dispatch {
     }
 
     // Opcode / Definition management
-    addOpcode(name, code, padding = false) {
-        this.protocolMap.name.set(name, code);
-        this.protocolMap.code.set(code, name);
-        this.protocolMap.padding[code] = padding;
-    }
 
-    checkOpcodes(names) {
-        return names.filter(name => !this.protocolMap.name.get(name));
-    }
-
-    addDefinition(name, version, definition, overwrite = false) {
-        if (typeof definition === 'string')
-            definition = this.protocol.parseDefinition(definition);
-        this.protocol.addDefinition(name, version, definition, overwrite);
-
-        if (!this.latestDefVersion.get(name) || this.latestDefVersion.get(name) < version)
-            this.latestDefVersion.set(name, version);
-    }
-
-    checkDefinitions(defs) {
-        let missingDefs = [];
-
-        Object.entries(defs).forEach(([name, versions]) => {
-            if (typeof versions !== 'object')
-                versions = [versions];
-
-            const known_versions = this.protocol.messages.get(name);
-            versions.forEach(version => {
-                if (version !== 'raw' && version !== 'event' && (!known_versions || !known_versions.get(version)))
-                    missingDefs.push({ name, version });
-            });
-        });
-
-        return missingDefs;
-    }
 }
 
 module.exports = Dispatch;

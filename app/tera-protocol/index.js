@@ -1,13 +1,15 @@
 const Encryption = require('./encryption')
 const PacketBuffer = require('./packetBuffer')
 const { PacketIntegrity } = require('./integrity');
-const PrepareData = require('./data-loader');
+const {metadata, protocol, protocolMap} = require('./data-loader');
 const Dispatch = require('./dispatch');
 const hooks = require('../tera-hooks');
 
 class reader {
     constructor() {
-        this.metadata = PrepareData.metadata
+        this.metadata = metadata
+        this.protocol = protocol
+        this.protocolMap = protocolMap
         this.state = -1
         this.session = new Encryption(false) // true for classic
         this.serverBuffer = new PacketBuffer()
@@ -24,7 +26,7 @@ class reader {
             this.integrity = new PacketIntegrity(null);
     }
 
-    packetHandler(data, type) {
+    async packetHandler(data, type) {
         if (type) {
             //server block
             switch (this.state) {
@@ -50,8 +52,8 @@ class reader {
                     break
                 }
                 case 2: {
-                    this.session.encrypt(data)
-                    this.serverBuffer.write(data)
+                    await this.session.encrypt(data)
+                    await this.serverBuffer.write(data)
 
                     while (data = this.serverBuffer.read()) {
                         if (this.dispatch)
@@ -80,8 +82,8 @@ class reader {
                     break
                 }
                 case 2: {
-                    this.session.decrypt(data)
-                    this.clientBuffer.write(data)
+                    await this.session.decrypt(data)
+                    await this.clientBuffer.write(data)
 
                     while (data = this.clientBuffer.read()) {
                         if (this.dispatch)

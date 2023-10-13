@@ -13,7 +13,7 @@ const TCPTracker = class extends EventEmitter {
     this.listen_options = listen_options;
     EventEmitter.call(this);
   }
-  track_packet(buffer, ip, tcp) {
+  async track_packet(buffer, ip, tcp) {
     let src = ip.info.srcaddr + ":" + tcp.info.srcport;
     let dst = ip.info.dstaddr + ":" + tcp.info.dstport;
     let key;
@@ -98,7 +98,7 @@ const TCPSession = class extends EventEmitter {
 
     EventEmitter.call(this);
   }
-  track(buffer, ip, tcp) {
+  async track(buffer, ip, tcp) {
     let src = ip.info.srcaddr + ":" + tcp.info.srcport;
     let dst = ip.info.dstaddr + ":" + tcp.info.dstport;
     //console.log(src, dst, tcp.info.seqno, tcp.info.ackno);
@@ -141,7 +141,7 @@ const TCPSession = class extends EventEmitter {
       } else {
         this.src = src;
         this.dst = dst;
-        this.is_ignored = !this.isServer; //We set to ignore this session, but we still want to track for connection start/end
+        //this.is_ignored = !this.isServer; //We set to ignore this session, but we still want to track for connection start/end
       }
       this.state = "ESTAB";
     }

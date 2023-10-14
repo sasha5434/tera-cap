@@ -31,7 +31,7 @@ class reader {
             //server block
             switch (this.state) {
                 case -1: {
-                    if (data.readUInt32LE(0) === 1) {
+                    if (data.length === 4 && data.readUInt32LE(0) === 1) {
                         this.state = 0
                     }
                     break

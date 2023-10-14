@@ -34,7 +34,7 @@ const TCPTracker = class extends EventEmitter {
       session.on("end", () => {
         delete this.sessions[key];
         console.info(
-          `[meter-core/tcp-tracker] - Remove session ${session?.src}->${session?.dst} (Total: ${
+          `[sniffer/tcp-tracker] - Remove session ${session?.src}->${session?.dst} (Total: ${
             Object.keys(this.sessions).length
           })`
         );
@@ -163,7 +163,7 @@ const TCPSession = class extends EventEmitter {
     } else if (src === this.dst) {
       this.handle_send_segment(buffer, ip, tcp);
     } else {
-      console.error("[meter-core/tcp_tracker] - non-matching packet in session: ip=" + ip + "tcp=" + tcp);
+      console.error("[sniffer/tcp_tracker] - non-matching packet in session: ip=" + ip + "tcp=" + tcp);
     }
   }
 
@@ -247,11 +247,12 @@ const TCPSession = class extends EventEmitter {
     //We apply the mask to remove unknown portions (probably can be fixed by implementing sack)
     if (flush_mask.includes(0)) {
       //console.log(flush_mask.toString("hex"));
-      if (buffers.length >= 65535) {
+      if (buffers.length >= 500) {
+        while (buffers.length >= 500) {
+          buffers.shift()
+          if (buffers.length === 0) { break; }
+        }
         //TODO: add a fail count for a given ack to not flush that many buffers, and then, only flush buffers in between
-
-        console.warn(`[meter-core/tcp_tracker] - Dropped ${totalLen} bytes`);
-        return Buffer.alloc(0); // We send valid buffer so that it acts as processed data
       }
       return null;
     } else {
@@ -339,7 +340,7 @@ function is_sack_in_header(buffer, ip, tcp) {
         break;
       default:
         throw new Error(
-          `[meter-core/tcp-tracker] - Unknown TCPOption ${buffer[options_offset]}, packet is probably malformed, should drop.`
+          `[sniffer/tcp-tracker] - Unknown TCPOption ${buffer[options_offset]}, packet is probably malformed, should drop.`
         ); //unknown option drop packet
     }
   }

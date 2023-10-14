@@ -3,13 +3,13 @@ const { execSync } = require("child_process")
 const { isIPv4 } = require("net")
 const { networkInterfaces } = require("os")
 const { RawSocket } = require("raw-socket-sniffer")
-const { TypedEmitter } = require("tiny-typed-emitter")
+const { EventEmitter } = require('node:events');
 const { TCPSession, TCPTracker } = require("./tcp_tracker")
 
 const { findDevice, deviceList } = cap.Cap;
 const { Ethernet, PROTOCOL, IPV4, TCP } = cap.decoders;
 
-const PktCapture = class extends TypedEmitter {
+const PktCapture = class extends EventEmitter {
   tcpTracker
   device
   port
@@ -20,7 +20,7 @@ const PktCapture = class extends TypedEmitter {
     this.tcpTracker = new TCPTracker(listen_options);
     this.tcpTracker.on("session", (session) => {
       console.info(
-        `[meter-core/pkt-capture] - New session ${session.src}->${session.dst} ${
+        `[sniffer/pkt-capture] - New session ${session.src}->${session.dst} ${
           session.is_ignored ? "(ingored) " : ""
         }(Total: ${Object.keys(this.tcpTracker.sessions).length})`
       );
@@ -97,7 +97,7 @@ const PktCaptureMode = {
   MODE_RAW_SOCKET: 1
 }
 
-const PktCaptureAll = class extends TypedEmitter {
+const PktCaptureAll = class extends EventEmitter {
   captures
 
   constructor(mode, port = 6040) {
@@ -106,7 +106,7 @@ const PktCaptureAll = class extends TypedEmitter {
 
     if (!adminRelauncher(mode)) {
       console.warn(
-        "[meter-core/PktCaptureAll] - Couldn't restart as admin, fallback to pcap mode, consider starting as admin yourself."
+        "[sniffer/PktCaptureAll] - Couldn't restart as admin, fallback to pcap mode, consider starting as admin yourself."
       );
       mode = PktCaptureMode.MODE_PCAP;
     }
@@ -132,7 +132,7 @@ const PktCaptureAll = class extends TypedEmitter {
               this.captures.set(device.name, pcapc);
               pcapc.listen();
             } catch (e) {
-              console.error(`[meter-core/PktCaptureAll] ${e}`);
+              console.error(`[sniffer/PktCaptureAll] ${e}`);
             }
           }
         }
@@ -158,7 +158,7 @@ const PktCaptureAll = class extends TypedEmitter {
               this.captures.set(device.address, rsc);
               rsc.listen();
             } catch (e) {
-              console.error(`[meter-core/PktCaptureAll] ${e}`);
+              console.error(`[sniffer/PktCaptureAll] ${e}`);
             }
           }
         }
@@ -214,7 +214,7 @@ function adminRelauncher(mode) {
       stdio: "inherit",
     });
   } catch (e) {
-    console.info(`[meter-core/pkt-capture] - ${e}`);
+    console.info(`[sniffer/pkt-capture] - ${e}`);
     return false;
   }
   process.exit(0);

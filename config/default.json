@@ -3,5 +3,5 @@
   "protocolVersion": 367080,
   "patchVersion": 92,
   "isServer": false,
-  "rawCapture": true
+  "rawCapture": false
 }

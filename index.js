@@ -1,13 +1,8 @@
 const config = require("config")
-const { PktCaptureAll, PktCaptureMode } = require('./app/sniffer')
+const { PcapCapture } = require('./app/sniffer')
 const outputDelay = require('./app/delay')
 
-const capture = new PktCaptureAll((config.get('rawCapture')) ? PktCaptureMode.MODE_RAW_SOCKET : PktCaptureMode.MODE_PCAP, config.get('port'))
-
-console.log(
-    `Listening on ${capture.captures.size} devices(s): ${Array.from(
-        capture.captures.keys()
-    ).join(", ")}`
-)
+const teraSniffer = new PcapCapture ({ listen_ip: config.get('listen_ip'), server_ip: config.get('server_ip'), server_port: config.get('server_port')})
+teraSniffer.listen()
 
 outputDelay(300)

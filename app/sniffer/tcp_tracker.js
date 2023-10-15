@@ -103,45 +103,20 @@ const TCPSession = class extends EventEmitter {
     let dst = ip.info.dstaddr + ":" + tcp.info.dstport;
     //console.log(src, dst, tcp.info.seqno, tcp.info.ackno);
     if (this.state === "NONE") {
-      //Detect connection direction & filter out outgoing connections from listening port (local:6040->remote:????)
-      const isSrcDeviceIp = isDeviceIp(ip.info.srcaddr, this.listen_options);
-      const isDstDeviceIp = isDeviceIp(ip.info.dstaddr, this.listen_options);
-      if (isSrcDeviceIp && this.listen_options.port === tcp.info.dstport) {
-        //local:????->xx.xx.xx.xx:6040
+      const fromListen = this.listen_options.listen_ip === ip.info.srcaddr
+      const toServer = this.listen_options.server_ip === ip.info.dstaddr
+      if (toServer && this.listen_options.server_port === tcp.info.dstport) {
+        //internet:????->server(xx.xx.xx.xx:7801)
         this.src = src;
         this.dst = dst;
-      } else if (this.listen_options.port === tcp.info.srcport && isDstDeviceIp) {
-        //xx.xx.xx.xx:6040->local:????
+      } else if (fromListen && this.listen_options.server_port === tcp.info.dstport && this.listen_options.listen_ip !== this.listen_options.server_ip) {
+        //local:????->server(xx.xx.xx.xx:7801)
         this.src = dst;
         this.dst = src;
-      } else if (!isSrcDeviceIp && !isDstDeviceIp) {
-        /*
-        Here we want to handle very special edge case where user uses VM, has a public IP on his host,
-        and a private ip his VM that doesn't match the host subnet.
-
-        Most accurate ways would be to:
-        - settings 
-        or
-        - checking for remoteserver being on amazon range (as well as port 6040), this will help a lot
-        
-        But we will try to see how it goes by just checking the listening port,
-        the drawback is that it'll listen on bad connections like "local:6040->remote:????", but it should be ignored later because opcodes won't match or parsing will fail
-        */
-        if (this.listen_options.port === tcp.info.dstport) {
-          this.src = src;
-          this.dst = dst;
-        } else if (this.listen_options.port === tcp.info.srcport) {
-          this.src = dst;
-          this.dst = src;
-        } else {
-          this.src = src;
-          this.dst = dst;
-          this.is_ignored = true;
-        }
       } else {
         this.src = src;
         this.dst = dst;
-        //this.is_ignored = !this.isServer; //We set to ignore this session, but we still want to track for connection start/end
+        this.is_ignored = true;
       }
       this.state = "ESTAB";
     }
@@ -343,56 +318,6 @@ function is_sack_in_header(buffer, ip, tcp) {
     }
   }
   return false;
-}
-
-//from: https://github.com/DylanPiercey/is-local-ip/blob/master/index.js
-//We don't use pkg as it's overkill & doesn't have typings as well
-const RANGES = [
-  // 10.0.0.0 - 10.255.255.255
-  /^(::f{4}:)?10\.\d{1,3}\.\d{1,3}\.\d{1,3}/,
-  // 127.0.0.0 - 127.255.255.255
-  /^(::f{4}:)?127\.\d{1,3}\.\d{1,3}\.\d{1,3}/,
-  // 169.254.1.0 - 169.254.254.255
-  /^(::f{4}:)?169\.254\.([1-9]|1?\d\d|2[0-4]\d|25[0-4])\.\d{1,3}/,
-  // 172.16.0.0 - 172.31.255.255
-  /^(::f{4}:)?(172\.1[6-9]|172\.2\d|172\.3[0-1])\.\d{1,3}\.\d{1,3}/,
-  // 192.168.0.0 - 192.168.255.255
-  /^(::f{4}:)?192\.168\.\d{1,3}\.\d{1,3}/,
-  // fc00::/7
-  /^f[c-d][0-9a-f]{2}(::1$|:[0-9a-f]{1,4}){1,7}/,
-  // fe80::/10
-  /^fe[89ab][0-9a-f](::1$|:[0-9a-f]{1,4}){1,7}/,
-];
-
-/**
- * Tests that an ip address is one that is reserved for local area, or internal networks.
- */
-function isLocalIp(address) {
-  return (
-    address === "::" ||
-    address === "::1" ||
-    RANGES.some(function (it) {
-      return it.test(address);
-    })
-  );
-}
-//from https://stackoverflow.com/questions/503052/javascript-is-ip-in-one-of-these-subnets
-function IPnumber(IPaddress) {
-  var ip = IPaddress.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
-  if (ip && ip.length === 5) {
-    return (+ip[1] << 24) + (+ip[2] << 16) + (+ip[3] << 8) + +ip[4];
-  }
-  return null;
-}
-/**
- * Tests that an ip address is one that is reserved for local area, or internal networks.
- */
-function isDeviceIp(ip, listen_options) {
-  const testIp = IPnumber(ip),
-    listen_ip = IPnumber(listen_options.ip),
-    mask = IPnumber(listen_options.mask);
-  if (!testIp || !listen_ip || !mask) return false;
-  return (testIp & mask) === (listen_ip & mask);
 }
 
 module['exports'] = {

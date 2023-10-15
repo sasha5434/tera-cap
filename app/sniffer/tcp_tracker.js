@@ -247,17 +247,10 @@ const TCPSession = class extends EventEmitter {
     //We apply the mask to remove unknown portions (probably can be fixed by implementing sack)
     if (flush_mask.includes(0)) {
       //console.log(flush_mask.toString("hex"));
-      if (buffers.length >= 500) {
+      if (buffers.length >= 50) {
         //clear buffers
-        while (buffers.length >= 500)
+        while (buffers.length >= 50)
           buffers.shift()
-        //we don't know whether large packet is continuation of previous message or not - so skip until new short message.
-        while (buffers[0].length >= 500) {
-          buffers.shift()
-          if (buffers.length === 0) { break; }
-        }
-        //and even after skipping long fragments we don't know whether small fragment after big is a new short message or a big message tail - skip small one too.
-        buffers.shift()
       }
       return null;
     } else {

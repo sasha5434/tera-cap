@@ -1,3 +1,5 @@
+const colors = require("colors")
+const skipOver = 65535;
 class PacketBuffer {
     constructor() {
         this.buffer = null;
@@ -11,18 +13,25 @@ class PacketBuffer {
             if (data.length <= 200) {
                 this.skip = false;
             }
-        } else if (data.length <= 64068) {
+        } else if (data.length <= skipOver) {
             // we'll chop off the front of `data` with each loop
             while (data.length > 0) {
                 // if we have a buffer prepared, we should append to it first
                 if (this.buffer != null) {
+                    if (this.buffer.length > skipOver) {
+                        console.log(colors.red('[tera-protocol/packetBuffer] - Buffer skipped: ' + this.buffer.length))
+                        this.buffer = null;
+                        this.position = 0;
+                        this.out.length = 0;
+                        this.skip = true;
+                        data = Buffer.alloc(0);
+                        break;
+                    }
                     // if our buffer size is less than 2, we'll need to compute the full size
                     if (this.buffer.length < 2) {
                         /* eslint-disable no-bitwise */
                         const old = this.buffer[0];        // save old byte
                         const size = (data[0] << 8) + old; // convert from little-endian
-                        if (size > 64068)
-                            console.log('big size 1: ' + size)
                         this.buffer = Buffer.alloc(size);  // make new buffer
                         this.buffer[0] = old;              // write old value
                         this.position = 1;                 // update position
@@ -58,8 +67,6 @@ class PacketBuffer {
                 // data we have, we should save it in the buffer
                 const size = data.readUInt16LE(0);
                 if (this.maximum < size) {
-                    if (size > 64068)
-                        console.log('big size 2: ' + size)
                     this.maximum = size;
                 }
                 if (size > data.length) {
@@ -74,7 +81,7 @@ class PacketBuffer {
                 data = data.slice(size);
             }
         } else {
-            console.log('[tera-protocol/packetBuffer] - Data skipped: ' + data.length)
+            console.log(colors.red('[tera-protocol/packetBuffer] - Data skipped: ' + data.length))
             this.buffer = null;
             this.position = 0;
             this.out.length = 0;

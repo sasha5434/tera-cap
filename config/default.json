@@ -3,6 +3,5 @@
   "server_ip": "178.250.154.7",
   "server_port": 7801,
   "protocolVersion": 367080,
-  "patchVersion": 92,
-  "isServer": false
+  "patchVersion": 92
 }

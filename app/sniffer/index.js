@@ -1,8 +1,6 @@
 const cap = require("cap-rbfork")
 const { EventEmitter } = require('node:events');
 const { TCPSession, TCPTracker } = require("./tcp_tracker")
-
-const { findDevice, deviceList } = cap.Cap;
 const { Ethernet, PROTOCOL, IPV4, TCP } = cap.decoders;
 
 const PktCapture = class extends EventEmitter {
@@ -73,7 +71,5 @@ class PcapCapture extends PktCapture {
 }
 
 module['exports'] = {
-  findDevice,
-  deviceList,
   PcapCapture
 }

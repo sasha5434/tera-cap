@@ -94,7 +94,6 @@ const TCPSession = class extends EventEmitter {
     this.in_handshake = true;
 
     this.protocol = new TeraProtocol();
-    this.isServer = config.get('isServer');
 
     EventEmitter.call(this);
   }
@@ -165,7 +164,7 @@ const TCPSession = class extends EventEmitter {
       }
       this.in_handshake = false;
       //this.emit("payload_recv", flush_payload);
-      this.protocol.packetHandler(flush_payload, !this.isServer)
+      this.protocol.packetHandler(flush_payload, true)
     } else if (direction === "send") {
       //Update seqno when unknowny
       if (this.send_seqno === 0) this.send_seqno = ackno;
@@ -177,7 +176,7 @@ const TCPSession = class extends EventEmitter {
       }
       this.send_seqno = ackno;
       //this.emit("payload_send", flush_payload);
-      this.protocol.packetHandler(flush_payload, this.isServer)
+      this.protocol.packetHandler(flush_payload, false)
     }
   }
   static get_flush(buffers, seqno, ackno) {

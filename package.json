@@ -12,9 +12,9 @@
     "cap-rbfork": "^0.2.1-a",
     "colors": "^1.4.0",
     "config": "^3.3.9",
+    "express": "^4.18.2",
     "hexy": "^0.3.1",
     "tera-crypto": "github:sasha5434/tera-crypto",
-    "tera-data-parser": "github:tera-proxy/tera-data-parser",
-    "raw-socket-sniffer": "github:Herysia/raw-socket-sniffer"
+    "tera-data-parser": "github:tera-proxy/tera-data-parser"
   }
 }

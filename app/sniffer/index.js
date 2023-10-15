@@ -14,7 +14,7 @@ const PktCapture = class extends EventEmitter {
     this.tcpTracker = new TCPTracker(listen_options);
     this.tcpTracker.on("session", (session) => {
       console.info(
-        `[sniffer/pkt-capture] - New session ${session.src}->${session.dst} ${
+        `[sniffer/pkt-capture] - Open session ${session.src} ${
           session.is_ignored ? "(ingored) " : ""
         }(Total: ${Object.keys(this.tcpTracker.sessions).length})`
       );
@@ -71,5 +71,6 @@ class PcapCapture extends PktCapture {
 }
 
 module['exports'] = {
-  PcapCapture
+  PcapCapture,
+  TCPTracker
 }

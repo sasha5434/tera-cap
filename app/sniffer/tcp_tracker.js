@@ -34,7 +34,7 @@ const TCPTracker = class extends EventEmitter {
       session.on("end", () => {
         delete this.sessions[key];
         console.info(
-          `[sniffer/tcp-tracker] - Remove session ${session?.src}->${session?.dst} (Total: ${
+          `[sniffer/tcp-tracker] - Close session ${session?.src} (Total: ${
             Object.keys(this.sessions).length
           })`
         );
@@ -108,8 +108,8 @@ const TCPSession = class extends EventEmitter {
         this.src = src;
         this.dst = dst;
       } else {
-        this.src = src;
-        this.dst = dst;
+        this.src = dst;
+        this.dst = src;
         this.is_ignored = true;
       }
       this.state = "ESTAB";

@@ -102,16 +102,11 @@ const TCPSession = class extends EventEmitter {
     let dst = ip.info.dstaddr + ":" + tcp.info.dstport;
     //console.log(src, dst, tcp.info.seqno, tcp.info.ackno);
     if (this.state === "NONE") {
-      const fromListen = this.listen_options.listen_ip === ip.info.srcaddr
       const toServer = this.listen_options.server_ip === ip.info.dstaddr
       if (toServer && this.listen_options.server_port === tcp.info.dstport) {
         //internet:????->server(xx.xx.xx.xx:7801)
         this.src = src;
         this.dst = dst;
-      } else if (fromListen && this.listen_options.server_port === tcp.info.dstport && this.listen_options.listen_ip !== this.listen_options.server_ip) {
-        //local:????->server(xx.xx.xx.xx:7801)
-        this.src = dst;
-        this.dst = src;
       } else {
         this.src = src;
         this.dst = dst;

@@ -91,6 +91,7 @@ class Dispatch {
         this.protocol = connection.protocol
         this.protocolMap = connection.protocolMap
         this.hooks = new Map()
+        this.userinfo = connection.userinfo
     }
 
     fromRaw(name, version, data) {
@@ -243,7 +244,7 @@ class Dispatch {
                         silenced = true
                 }
                 catch (e) {
-                    log.error([
+                    console.log([
                         `[dispatch] [${hook.moduleName}] handle: error running event hook for ${getMessageName(this.protocolMap, code, hook.definitionVersion)}`,
                         `hook: ${getHookName(hook)}`,
                         `error: ${e.message}`,
@@ -277,7 +278,7 @@ class Dispatch {
                                 modified = true
                                 silenced = false
                             } catch (e) {
-                                log.error([
+                                console.log([
                                     `[dispatch] [${hook.moduleName}] handle: failed to generate ${getMessageName(this.protocolMap, code, defVersion)}`,
                                     `hook: ${getHookName(hook)}`,
                                     `error: ${e.message}`,
@@ -289,7 +290,7 @@ class Dispatch {
                             silenced = true
                     }
                     catch (e) {
-                        log.error([
+                        console.log([
                             `[dispatch] [${hook.moduleName}] handle: error running hook for ${getMessageName(this.protocolMap, code, defVersion)}`,
                             `hook: ${getHookName(hook)}`,
                             `data: ${util.inspect(event)}`,
@@ -299,7 +300,7 @@ class Dispatch {
                     }
                 }
                 catch (e) {
-                    log.error([
+                    console.log([
                         `[dispatch] [${hook.moduleName}] handle: failed to parse ${getMessageName(this.protocolMap, code, hook.definitionVersion)}`,
                         `hook: ${getHookName(hook)}`,
                         `data: ${data.toString('hex')}`,

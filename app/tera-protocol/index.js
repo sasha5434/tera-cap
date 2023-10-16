@@ -5,8 +5,20 @@ const {metadata, protocol, protocolMap} = require('./data-loader');
 const Dispatch = require('./dispatch');
 const hooks = require('../tera-hooks');
 
-class reader {
+class connection {
     constructor() {
+        this.userinfo = {
+            inGame: false,
+            id: 0,
+            server: '',
+            character: {
+                gameId: 0,
+                name: '',
+                level: 0
+            },
+            characters: new Object(null)
+        }
+
         this.metadata = metadata
         this.protocol = protocol
         this.protocolMap = protocolMap
@@ -14,10 +26,10 @@ class reader {
         this.session = new Encryption(false) // true for classic
         this.serverBuffer = new PacketBuffer()
         this.clientBuffer = new PacketBuffer()
-        this.dispatch = new Dispatch(this);
         this.integrity = null;
-        this.hooks = hooks(this.dispatch)
 
+        this.dispatch = new Dispatch(this);
+        this.hooks = hooks(this.dispatch)
         if (this.metadata.patchVersion >= 100)
             this.dispatch.hook(null, 'S_LOGIN_ACCOUNT_INFO', 3, { order: -Infinity, filter: { incoming: true } }, (event) => {
                 this.integrity = new PacketIntegrity(event.antiCheatChecksumSeed);
@@ -100,4 +112,4 @@ class reader {
     }
 }
 
-module['exports'] = reader
+module['exports'] = connection

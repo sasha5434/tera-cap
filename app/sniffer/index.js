@@ -71,6 +71,5 @@ class PcapCapture extends PktCapture {
 }
 
 module['exports'] = {
-  PcapCapture,
-  TCPTracker
+  PcapCapture
 }

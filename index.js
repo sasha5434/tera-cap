@@ -16,7 +16,7 @@ app.use(
     }
 )
 
-app.get('/players', (req, res) => {
+app.get('/online', (req, res) => {
     const online = new Array()
     for (const key of Object.keys(req.sessions)) {
         if (req.sessions[key].connection.userinfo.inGame)

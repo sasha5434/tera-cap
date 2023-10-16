@@ -1,5 +1,5 @@
 const logger = require('./hooks/logger');
-const login = require('./hooks/login');
+const online = require('./hooks/online');
 
 function hooks (dispatch) {
     function hook(...args) {
@@ -8,7 +8,7 @@ function hooks (dispatch) {
     }
     const mod = { hook,dispatch }
     //logger(mod)
-    login(mod)
+    online(mod)
 }
 
 module['exports'] = hooks

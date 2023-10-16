@@ -18,15 +18,6 @@ class PacketBuffer {
             while (data.length > 0) {
                 // if we have a buffer prepared, we should append to it first
                 if (this.buffer != null) {
-                    if (this.buffer.length > skipOver) {
-                        console.log(colors.red('[tera-protocol/packetBuffer] - Buffer skipped: ' + this.buffer.length))
-                        this.buffer = null;
-                        this.position = 0;
-                        this.out.length = 0;
-                        this.skip = true;
-                        data = Buffer.alloc(0);
-                        break;
-                    }
                     // if our buffer size is less than 2, we'll need to compute the full size
                     if (this.buffer.length < 2) {
                         /* eslint-disable no-bitwise */
@@ -66,16 +57,19 @@ class PacketBuffer {
                 // otherwise, read the size value, and if it's bigger than the size of the
                 // data we have, we should save it in the buffer
                 const size = data.readUInt16LE(0);
-                if (this.maximum < size) {
-                    this.maximum = size;
-                }
                 if (size > data.length) {
                     this.buffer = Buffer.alloc(size);
                     data.copy(this.buffer);
                     this.position = data.length;
                     break;
+                } else if (size === 0) {
+                    console.log(colors.red('[tera-protocol/packetBuffer] - Size = 0: ' + data.length))
+                    this.buffer = null;
+                    this.position = 0;
+                    this.out = [];
+                    this.skip = true;
+                    break;
                 }
-
                 // otherwise, just push it and chop off the front, then keep going
                 this.out.push(data.slice(0, size));
                 data = data.slice(size);
@@ -84,7 +78,7 @@ class PacketBuffer {
             console.log(colors.red('[tera-protocol/packetBuffer] - Data skipped: ' + data.length))
             this.buffer = null;
             this.position = 0;
-            this.out.length = 0;
+            this.out = [];
             this.skip = true;
         }
     }

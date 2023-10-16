@@ -28,6 +28,6 @@ module.exports = function login(mod) {
         console.log(colors.blue('[tera-hooks/hooks/login] - Enter world - id: ' + event.playerId + ', name: ' + event.name + ', level: ' + event.level));
     });
 
-    mod.hook('S_USER_CHANGE_NAME', 1, (event) => { if (mod.dispatch.userinfo.gameId === parseInt(event.gameId, 10)) mod.dispatch.userinfo.character.name = event.name })
-    mod.hook('S_USER_LEVELUP', 2, (event) => { if (mod.dispatch.userinfo.gameId === parseInt(event.gameId, 10)) mod.dispatch.userinfo.character.level = parseInt(event.level, 10) })
+    mod.hook('S_USER_CHANGE_NAME', 1, (event) => { if (mod.dispatch.userinfo.character.gameId === parseInt(event.gameId, 10)) mod.dispatch.userinfo.character.name = event.name })
+    mod.hook('S_USER_LEVELUP', 2, (event) => { if (mod.dispatch.userinfo.character.gameId === parseInt(event.gameId, 10)) mod.dispatch.userinfo.character.level = parseInt(event.level, 10) })
 }

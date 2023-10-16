@@ -25,7 +25,7 @@ module.exports = function login(mod) {
         mod.dispatch.userinfo.character.id = parseInt(event.playerId, 10);
         mod.dispatch.userinfo.character.name = event.name;
         mod.dispatch.userinfo.character.level = parseInt(event.level, 10);
-        console.log(colors.blue('[tera-hooks/hooks/login] - Enter world - id: ' + event.playerId + ', name: ' + event.name + ', level: ' + event.level));
+        console.log(colors.blue('[tera-hooks/hooks/online] - Enter world - id: ' + event.playerId + ', name: ' + event.name + ', level: ' + event.level));
     });
 
     mod.hook('S_USER_CHANGE_NAME', 1, (event) => { if (mod.dispatch.userinfo.character.gameId === parseInt(event.gameId, 10)) mod.dispatch.userinfo.character.name = event.name })

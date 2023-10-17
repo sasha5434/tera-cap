@@ -60,11 +60,6 @@ class PcapCapture extends PktCapture {
     this.c.on("packet", (nbytes, truncated) => {
       if (linkType === "ETHERNET") {
         this.dispatchPacket(this.#buffer);
-      } else if (linkType === "NULL" && this.device === "\\Device\\NPF_Loopback") {
-        const type = this.#buffer.readUInt32LE();
-        //IP header loopback
-        if (type !== 2) return;
-        this.dispatchPacket(this.#buffer.subarray(4));
       }
     });
   }

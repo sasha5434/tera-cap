@@ -1,8 +1,7 @@
 const { EventEmitter } = require("stream")
 const { IPTracker } = require("./ip_tracker")
-
-const config = require("config")
 const TeraProtocol = require('../tera-protocol')
+const checksum = require("./checksum");
 
 const TCPTracker = class extends EventEmitter {
   sessions
@@ -128,7 +127,11 @@ const TCPSession = class extends EventEmitter {
     if (this.is_ignored) return; //Ignore data transfert
     let src = ip.info.srcaddr + ":" + tcp.info.srcport;
     if (src === this.src) {
-      this.handle_recv_segment(buffer, ip, tcp);
+      if (checksum(buffer, ip, tcp)){
+        this.handle_recv_segment(buffer, ip, tcp);
+      } else {
+        console.log("[sniffer/tcp_tracker] - skipp packet (checksum) length: " + ip.info.totallen);
+      }
     } else if (src === this.dst) {
       this.handle_send_segment(buffer, ip, tcp);
     } else {
@@ -241,7 +244,7 @@ const TCPSession = class extends EventEmitter {
     }
     // this packet came from the active opener / client
     if (tcpDataLength > 0) {
-      //We store the the segment in the buffers list
+      //We store the segment in the buffers list
       this.send_buffers.push({
         seqno: tcp.info.seqno,
         payload: Buffer.from(packet.subarray(tcp.offset, tcp.offset + tcpDataLength)),
@@ -261,7 +264,7 @@ const TCPSession = class extends EventEmitter {
       return;
     }
     if (tcpDataLength > 0) {
-      //We store the the segment in the buffers list
+      //We store the segment in the buffers list
       this.recv_buffers.push({
         seqno: tcp.info.seqno,
         payload: Buffer.from(packet.subarray(tcp.offset, tcp.offset + tcpDataLength)),

@@ -1,3 +1,4 @@
+const colors= require("colors")
 const { EventEmitter } = require("stream")
 const { IPTracker } = require("./ip_tracker")
 const TeraProtocol = require('../tera-protocol')
@@ -130,7 +131,7 @@ const TCPSession = class extends EventEmitter {
       if (checksum(buffer, ip, tcp)){
         this.handle_recv_segment(buffer, ip, tcp);
       } else {
-        console.log("[sniffer/tcp_tracker] - skipp packet (checksum) length: " + ip.info.totallen);
+        console.log(colors.yellow("[sniffer/tcp_tracker] - Skipp packet (checksum) length: " + ip.info.totallen));
       }
     } else if (src === this.dst) {
       this.handle_send_segment(buffer, ip, tcp);
@@ -276,7 +277,7 @@ const TCPSession = class extends EventEmitter {
   }
 }
 function is_sack_in_header(buffer, ip, tcp) {
-  if (tcp.hdrlen == 20) return false;
+  if (tcp.hdrlen === 20) return false;
   //Parse TCP Options (//TODO: move to cap/decoders ?)
   let options_offset = ip.offset + 20;
   const options_len = tcp.hdrlen - 20;

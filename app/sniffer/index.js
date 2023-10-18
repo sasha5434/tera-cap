@@ -41,9 +41,9 @@ const PktCapture = class extends EventEmitter {
 class PcapCapture extends PktCapture {
   c
   #buffer
-  constructor(listen_options) {
+  constructor(listen_options, variables) {
     //TODO: check device format (must be device path)
-    super(listen_options); //Sets TCPTracker
+    super(listen_options, variables); //Sets TCPTracker
     this.c = new cap.Cap();
     this.device = cap.findDevice(this.listen_ip);
     console.log(`Listening on ${this.device}`)

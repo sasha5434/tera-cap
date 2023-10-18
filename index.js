@@ -3,7 +3,12 @@ const express = require('express')
 const { PcapCapture } = require('./app/sniffer')
 const outputDelay = require('./app/delay')
 
-const teraSniffer = new PcapCapture ({ listen_ip: config.get('listen_ip'), server_ip: config.get('server_ip'), server_port: config.get('server_port')})
+const variables = {
+    dungeons: new Object(null),
+    bttlefields: new Object(null)
+}
+
+const teraSniffer = new PcapCapture ({ listen_ip: config.get('listen_ip'), server_ip: config.get('server_ip'), server_port: config.get('server_port')}, variables)
 teraSniffer.listen()
 
 const app = express()
@@ -12,12 +17,13 @@ const port = config.get('webserver_port')
 app.use(
     function (req, res, next) {
         req.sessions = teraSniffer.tcpTracker.sessions
+        req.variables = variables
         next()
     }
 )
 
 app.get('/online', (req, res) => {
-    const online = new Array()
+    const online = []
     for (const key of Object.keys(req.sessions)) {
         if (req.sessions[key].connection.userinfo.inGame)
             try {

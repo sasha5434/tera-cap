@@ -7,9 +7,11 @@ const checksum = require("./checksum");
 const TCPTracker = class extends EventEmitter {
   sessions
   listen_options
-  constructor(listen_options) {
+  variables
+  constructor(listen_options, variables) {
     super();
     this.sessions = {};
+    this.variables = variables
     this.listen_options = listen_options;
     EventEmitter.call(this);
   }
@@ -29,7 +31,7 @@ const TCPTracker = class extends EventEmitter {
       //if (tcp.info.flags & TCPFlags.rst || tcp.info.flags & TCPFlags.fin) return; //Connexion is supposed to be closing, ignoring
       if (!(tcp.info.flags & 8 /* psh */) && !(tcp.info.flags & 2 /* syn */)) return; //Wait for a syn or psh to create session
       is_new = true;
-      session = new TCPSession(this.listen_options);
+      session = new TCPSession(this.listen_options, this.variables);
       this.sessions[key] = session;
       session.on("end", () => {
         delete this.sessions[key];
@@ -73,7 +75,7 @@ const TCPSession = class extends EventEmitter {
 
   protocol;
 
-  constructor(listen_options) {
+  constructor(listen_options, variables) {
     super();
     this.listen_options = listen_options;
 
@@ -93,7 +95,7 @@ const TCPSession = class extends EventEmitter {
     this.skip_socks5 = 0;
     this.in_handshake = true;
 
-    this.connection = new TeraProtocol();
+    this.connection = new TeraProtocol(variables);
 
     EventEmitter.call(this);
   }

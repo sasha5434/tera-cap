@@ -7,11 +7,11 @@ const PktCapture = class extends EventEmitter {
   tcpTracker
   device
   server_port
-  constructor(listen_options) {
+  constructor(listen_options, variables) {
     super();
     this.listen_ip = listen_options.listen_ip;
     this.server_port = listen_options.server_port;
-    this.tcpTracker = new TCPTracker(listen_options);
+    this.tcpTracker = new TCPTracker(listen_options, variables);
     this.tcpTracker.on("session", (session) => {
       console.info(
         `[sniffer/pkt-capture] - Open session ${session.src} ${

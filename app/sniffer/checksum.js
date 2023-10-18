@@ -16,15 +16,8 @@ function csum16(buffer) {
         sum += buffer.readUInt16BE(0, 2);
         buffer = buffer.slice(2);
     }
-    if (sum > 65535) {
+    while (sum > 65535)
         sum = csum16_f(sum);
-        if (sum > 65535) {
-            sum = csum16_f(sum);
-            if (sum > 65535) {
-                sum = csum16_f(sum);
-            }
-        }
-    }
     return 65535 - sum;
 }
 

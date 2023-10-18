@@ -6,7 +6,7 @@ const Dispatch = require('./dispatch');
 const hooks = require('../tera-hooks');
 
 class connection {
-    constructor() {
+    constructor(variables) {
         this.userinfo = {
             inGame: false,
             id: 0,
@@ -18,7 +18,7 @@ class connection {
             },
             characters: new Object(null)
         }
-
+        this.variables = variables
         this.metadata = metadata
         this.protocol = protocol
         this.protocolMap = protocolMap

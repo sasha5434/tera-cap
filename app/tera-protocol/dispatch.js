@@ -88,6 +88,7 @@ function errStack(err = new Error(), removeFront = true) {
 
 class Dispatch {
     constructor(connection) {
+        this.variables = connection.variables
         this.protocol = connection.protocol
         this.protocolMap = connection.protocolMap
         this.hooks = new Map()

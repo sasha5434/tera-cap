@@ -7,7 +7,8 @@
       "S_RETURN_TO_LOBBY": 54807,
       "S_EXIT": 26668,
       "S_USER_CHANGE_NAME": 51794,
-      "S_USER_LEVELUP": 27768
+      "S_USER_LEVELUP": 27768,
+      "C_CHAT": 32254
     }
   },
   "protocol": {
@@ -17,6 +18,7 @@
     "S_RETURN_TO_LOBBY.1.def": "",
     "S_EXIT.3.def": "IyBUaGVzZSBhcmUgc2VudCB0byB0aGUgbGF1bmNoZXIgcHJpb3IgdG8gY2xvc2luZyB0aGUgZ2FtZQppbnQzMiBjYXRlZ29yeQppbnQzMiBjb2Rl",
     "S_USER_CHANGE_NAME.1.def": "dWludDY0IGdhbWVJZApzdHJpbmcgbmFtZQo=",
-    "S_USER_LEVELUP.2.def": "dWludDY0IGdhbWVJZAp1aW50MzIgbGV2ZWwK"
+    "S_USER_LEVELUP.2.def": "dWludDY0IGdhbWVJZAp1aW50MzIgbGV2ZWwK",
+    "C_CHAT.1.def": "IyBzYXkgPSAwLCBwYXJ0eSA9IDEsIGd1aWxkID0gMiwgYXJlYSA9IDMsIHRyYWRlID0gNCwgZ3JlZXQgPSA5LAojIHByaXZhdGUgPSAxMS0xOCwgcC1ub3RpY2UgPSAyMSwgZW1vdGUgPSAyNiwgZ2xvYmFsID0gMjcsIHItbm90aWNlID0gMjUsCiMgcmFpZCA9IDMyLCBtZWdhcGhvbmUgPSAyMTMsIGd1aWxkLWFkdiA9IDIxNAp1aW50MzIgY2hhbm5lbApzdHJpbmcgbWVzc2FnZQo="
   }
 }

@@ -11,6 +11,7 @@ const PktCapture = class extends EventEmitter {
     super();
     this.listen_ip = listen_options.listen_ip;
     this.server_port = listen_options.server_port;
+    this.server_ip = listen_options.server_ip;
     this.tcpTracker = new TCPTracker(listen_options, variables);
     this.tcpTracker.on("session", (session) => {
       console.info(
@@ -52,7 +53,7 @@ class PcapCapture extends PktCapture {
   listen(){
     const linkType = this.c.open(
       this.device,
-      `tcp and (src port ${this.server_port} or dst port ${this.server_port})`,
+      `tcp and host ${this.server_ip} and port ${this.server_port}`,
       10 * 1024 * 1024,
       this.#buffer
     );

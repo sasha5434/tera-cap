@@ -2,10 +2,11 @@ const config = require("config")
 const express = require('express')
 const { PcapCapture } = require('./app/sniffer')
 const outputDelay = require('./app/delay')
+const { Matchings } = require('./app/models/matching')
 
 const variables = {
-    dungeons: new Object(null),
-    bttlefields: new Object(null)
+    dungeons: new Matchings(),
+    battlegrounds: new Matchings()
 }
 
 const teraSniffer = new PcapCapture ({ listen_ip: config.get('listen_ip'), server_ip: config.get('server_ip'), server_port: config.get('server_port')}, variables)
@@ -38,6 +39,24 @@ app.get('/online', (req, res) => {
             } catch (err) { console.log(err) }
     }
     res.json(online)
+})
+
+app.get('/dungeons', (req, res) => {
+    let dg;
+    try {
+        req.variables.dungeons.link(req.sessions);
+        dg = req.variables.dungeons.getGroupedByInstance();
+    } catch (err) { console.log(err) }
+    res.json(dg)
+})
+
+app.get('/battlegrounds', (req, res) => {
+    let bg;
+    try {
+        req.variables.battlegrounds.link(req.sessions);
+        bg = req.variables.battlegrounds.getGroupedByInstance();
+    } catch (err) { console.log(err) }
+    res.json(bg)
 })
 
 app.listen(port, config.get('listen_ip'), () => {

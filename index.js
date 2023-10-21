@@ -6,7 +6,16 @@ const { Matchings } = require('./app/models/matching')
 
 const variables = {
     dungeons: new Matchings(),
-    battlegrounds: new Matchings()
+    battlegrounds: new Matchings(),
+    endSessionHandler: function(session) {
+        
+        const name = session?.connection?.userinfo?.character?.name;
+        if (name === undefined)
+            return;
+
+        this.dungeons.tryRemoveByPlayerName(name);
+        this.battlegrounds.tryRemoveByPlayerName(name);
+    }
 }
 
 const teraSniffer = new PcapCapture ({ listen_ip: config.get('listen_ip'), server_ip: config.get('server_ip'), server_port: config.get('server_port')}, variables)

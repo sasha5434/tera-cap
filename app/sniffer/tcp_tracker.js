@@ -34,6 +34,7 @@ const TCPTracker = class extends EventEmitter {
       session = new TCPSession(this.listen_options, this.variables);
       this.sessions[key] = session;
       session.on("end", () => {
+        this.variables.endSessionHandler(this.sessions[key]);
         delete this.sessions[key];
         console.info(
           `[sniffer/tcp-tracker] - Close session ${session?.src} (Total: ${

@@ -42,5 +42,7 @@ module.exports = function matching(mod) {
         const modified = mod.dispatch.variables.dungeons.tryModifyByPlayerName(name, event.players);
         if (!modified)
             console.log(colors.red(`[tera-hooks/hooks/matching] - Could not modify matching: by "${name}"`));
+        else
+            console.log(colors.blue(`[tera-hooks/hooks/matching] - Matching modified: by "${name}"`));
     });
 }

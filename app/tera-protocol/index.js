@@ -24,11 +24,11 @@ class connection {
         this.protocolMap = protocolMap
         this.state = -1
         this.session = new Encryption(false) // true for classic
-        this.serverBuffer = new PacketBuffer()
-        this.clientBuffer = new PacketBuffer()
         this.integrity = null;
 
         this.dispatch = new Dispatch(this);
+        this.serverBuffer = new PacketBuffer(this.dispatch, true)
+        this.clientBuffer = new PacketBuffer(this.dispatch, false)
         this.hooks = hooks(this.dispatch)
         if (this.metadata.patchVersion >= 100)
             this.dispatch.hook(null, 'S_LOGIN_ACCOUNT_INFO', 3, { order: -Infinity, filter: { incoming: true } }, (event) => {
@@ -66,12 +66,6 @@ class connection {
                 case 2: {
                     await this.session.encrypt(data)
                     await this.serverBuffer.write(data)
-
-                    while (data = this.serverBuffer.read()) {
-                        if (this.dispatch)
-                            data = this.dispatch.handle(data, true);
-                    }
-
                     break
                 }
                 default: {
@@ -96,12 +90,6 @@ class connection {
                 case 2: {
                     await this.session.decrypt(data)
                     await this.clientBuffer.write(data)
-
-                    while (data = this.clientBuffer.read()) {
-                        if (this.dispatch)
-                            data = this.dispatch.handle(data, false);
-                    }
-
                     break
                 }
                 default: {

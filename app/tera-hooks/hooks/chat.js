@@ -4,7 +4,7 @@ const moment = require("moment")
 module.exports = function chat(mod) {
     mod.hook('C_CHAT', 1, event => {
         const date = moment(Date.now()).local().format('DD/MM/YYYY H:mm:ss')
-        console.log(colors.cyan('[tera-hooks/hooks/chat] ' + date + ' ' + mod.dispatch.userinfo.character.name + ', ch: ' + event.channel + ', msg:\n' + event.message.replace(/<\/?[^>]+>/gi, '')))
+        console.log(colors.cyan('[tera-hooks/hooks/chat] ' + date + ' ' + mod.dispatch.userinfo.character.name + ', ch: ' + event.channel + ', msg: ' + event.message.replace(/<\/?[^>]+>/gi, '')))
         fs.appendFileSync('chat.txt', date + ' ' + mod.dispatch.userinfo.character.name + ', ch: ' + event.channel + ', msg: ' + event.message.replace(/<\/?[^>]+>/gi, '') + '\n')
     });
 }

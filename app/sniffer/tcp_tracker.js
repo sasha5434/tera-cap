@@ -93,9 +93,6 @@ const TCPSession = class extends EventEmitter {
     this.send_ip_tracker.on("segment", this.handle_send_segment.bind(this));
     this.recv_ip_tracker.on("segment", this.handle_recv_segment.bind(this));
 
-    this.skip_socks5 = 0;
-    this.in_handshake = true;
-
     this.connection = new TeraProtocol(variables);
 
     EventEmitter.call(this);
@@ -106,10 +103,15 @@ const TCPSession = class extends EventEmitter {
     //console.log(src, dst, tcp.info.seqno, tcp.info.ackno);
     if (this.state === "NONE") {
       const toServer = this.listen_options.server_ip === ip.info.dstaddr
-      if (toServer && this.listen_options.server_port === tcp.info.dstport) {
+      if (toServer && this.listen_options.server_port === tcp.info.dstport && (tcp.info.flags & 2 /* syn */)) {
         //internet:????->server(xx.xx.xx.xx:7801)
         this.src = src;
         this.dst = dst;
+      } else if (toServer && this.listen_options.server_port === tcp.info.dstport) {
+        //internet:????->server(xx.xx.xx.xx:7801)
+        this.src = src;
+        this.dst = dst;
+        this.is_ignored = true;
       } else {
         this.src = dst;
         this.dst = src;
@@ -158,15 +160,8 @@ const TCPSession = class extends EventEmitter {
         return;
       }
       this.recv_seqno = ackno;
-      if (this.in_handshake && flush_payload.length === 2 && flush_payload.equals(Buffer.from([5, 2])))
-        this.skip_socks5 = 4;
-      if (this.skip_socks5 > 0) {
-        this.skip_socks5--;
-        return;
-      }
-      this.in_handshake = false;
-      //this.emit("payload_recv", flush_payload);
-      this.connection.packetHandler(flush_payload, true)
+      if (flush_payload.length > 0)
+        this.connection.packetHandler(flush_payload, true)
     } else if (direction === "send") {
       //Update seqno when unknowny
       if (this.send_seqno === 0) this.send_seqno = ackno;
@@ -177,11 +172,12 @@ const TCPSession = class extends EventEmitter {
         return;
       }
       this.send_seqno = ackno;
-      //this.emit("payload_send", flush_payload);
-      this.connection.packetHandler(flush_payload, false)
+      if (flush_payload.length > 0)
+        this.connection.packetHandler(flush_payload, false)
     }
   }
   static get_flush(buffers, seqno, ackno) {
+    buffers.sort((a, b) => a['seqno'] - b['seqno']);
     const totalLen = ackno - seqno;
     if (totalLen <= 0) return null;
     let flush_payload = Buffer.alloc(totalLen);

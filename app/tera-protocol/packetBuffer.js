@@ -1,19 +1,25 @@
 const colors = require("colors")
 const skipOver = 65535;
 class PacketBuffer {
-    constructor() {
+    constructor(dispatch, incoming) {
+        this.incoming = incoming
+        this.dispatch = dispatch
         this.buffer = null;
         this.position = 0;
-        this.out = [];
-        this.skip = false;
+        this.skipped = false;
+        this.skip = function () {
+            this.buffer = null;
+            this.position = 0;
+            this.skipped = true;
+        }
     }
 
     async write(data) {
-        if (this.skip) {
+        if (this.skipped) {
             if (data.length <= 200) {
-                this.skip = false;
+                this.skipped = false;
             }
-        } else if (data.length <= skipOver) {
+        } else {
             // we'll chop off the front of `data` with each loop
             while (data.length > 0) {
                 // if we have a buffer prepared, we should append to it first
@@ -36,7 +42,12 @@ class PacketBuffer {
 
                     // if we filled the buffer, push it
                     if (this.position === this.buffer.length) {
-                        this.out.push(this.buffer);
+                        try {
+                            this.dispatch.handle(this.buffer, this.incoming);
+                        } catch (e) {
+                            this.skip();
+                            break;
+                        }
                         this.buffer = null;
                         this.position = 0;
                     }
@@ -64,27 +75,19 @@ class PacketBuffer {
                     break;
                 } else if (size === 0) {
                     console.log(colors.red('[tera-protocol/packetBuffer] - Size = 0: ' + data.length))
-                    this.buffer = null;
-                    this.position = 0;
-                    this.out = [];
-                    this.skip = true;
+                    this.skip();
                     break;
                 }
                 // otherwise, just push it and chop off the front, then keep going
-                this.out.push(data.slice(0, size));
+                try {
+                    this.dispatch.handle(data.slice(0, size), this.incoming);
+                } catch (e) {
+                    this.skip();
+                    break;
+                }
                 data = data.slice(size);
             }
-        } else {
-            console.log(colors.red('[tera-protocol/packetBuffer] - Data skipped: ' + data.length))
-            this.buffer = null;
-            this.position = 0;
-            this.out = [];
-            this.skip = true;
         }
-    }
-
-    read() {
-        return this.out.shift();
     }
 }
 

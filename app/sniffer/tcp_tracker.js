@@ -3,27 +3,32 @@ const { EventEmitter } = require("stream")
 const { IPTracker } = require("./ip_tracker")
 const TeraProtocol = require('../tera-protocol')
 const checksum = require("./checksum");
+const searchBuffer = Buffer.from([0x00, 0x00, 0x00, 0x00])
 
 const TCPTracker = class extends EventEmitter {
   sessions
   listen_options
   variables
+  server_socket
   constructor(listen_options, variables) {
     super();
     this.sessions = {};
     this.variables = variables
     this.listen_options = listen_options;
+    this.server_socket = this.listen_options.server_ip + ":" +  this.listen_options.server_port;
     EventEmitter.call(this);
   }
   async track_packet(buffer, ip, tcp) {
+    let key;
     let src = ip.info.srcaddr + ":" + tcp.info.srcport;
     let dst = ip.info.dstaddr + ":" + tcp.info.dstport;
-    let key;
-    if (src < dst) {
-      key = src + "-" + dst;
-    } else {
-      key = dst + "-" + src;
-    }
+
+    if (ip.info.dstaddr + ":" + tcp.info.dstport ===  this.server_socket)
+      key = src;
+    else if (ip.info.srcaddr + ":" + tcp.info.srcport ===  this.server_socket)
+      key = dst;
+    else
+      return;
 
     let is_new = false;
     let session = this.sessions[key];
@@ -56,6 +61,7 @@ const TCPTracker = class extends EventEmitter {
 
 const TCPSession = class extends EventEmitter {
   state;
+  last_use;
   src;
   dst;
 
@@ -71,9 +77,6 @@ const TCPSession = class extends EventEmitter {
   send_ip_tracker;
   recv_ip_tracker;
 
-  skip_socks5;
-  in_handshake;
-
   protocol;
 
   constructor(listen_options, variables) {
@@ -81,6 +84,7 @@ const TCPSession = class extends EventEmitter {
     this.listen_options = listen_options;
 
     this.state = "NONE";
+    this.last_use = Date.now();
     this.send_seqno = 0;
     this.send_buffers = [];
 
@@ -98,6 +102,7 @@ const TCPSession = class extends EventEmitter {
     EventEmitter.call(this);
   }
   async track(buffer, ip, tcp) {
+    this.last_use = Date.now();
     let src = ip.info.srcaddr + ":" + tcp.info.srcport;
     let dst = ip.info.dstaddr + ":" + tcp.info.dstport;
     //console.log(src, dst, tcp.info.seqno, tcp.info.ackno);
@@ -235,6 +240,9 @@ const TCPSession = class extends EventEmitter {
   }
   handle_recv_segment(packet, ip, tcp) {
     const tcpDataLength = ip.info.totallen - ip.hdrlen - tcp.hdrlen;
+    const payload = Buffer.from(packet.subarray(tcp.offset, tcp.offset + tcpDataLength))
+    const offset = payload.indexOf(searchBuffer)
+    //if (offset !== -1) console.log('recv ' + offset + ' ' + tcpDataLength + ' ' + Buffer.from(payload.subarray(0, offset)).toString('hex'))
     let is_sack = false;
     try {
       is_sack = is_sack_in_header(packet, ip, tcp);
@@ -247,7 +255,7 @@ const TCPSession = class extends EventEmitter {
       //We store the segment in the buffers list
       this.send_buffers.push({
         seqno: tcp.info.seqno,
-        payload: Buffer.from(packet.subarray(tcp.offset, tcp.offset + tcpDataLength)),
+        payload: (offset !== -1) ? Buffer.from(payload.subarray(0, offset)) : payload
       });
     }
     if (tcp.info.ackno && !is_sack) {
@@ -256,6 +264,9 @@ const TCPSession = class extends EventEmitter {
   }
   handle_send_segment(packet, ip, tcp) {
     const tcpDataLength = ip.info.totallen - ip.hdrlen - tcp.hdrlen;
+    const payload = Buffer.from(packet.subarray(tcp.offset, tcp.offset + tcpDataLength))
+    const offset = payload.indexOf(searchBuffer)
+    //if (offset !== -1) console.log('recv ' + offset + ' ' + tcpDataLength + ' ' + Buffer.from(payload.subarray(0, offset)).toString('hex'))
     let is_sack = false;
     try {
       is_sack = is_sack_in_header(packet, ip, tcp);
@@ -267,12 +278,16 @@ const TCPSession = class extends EventEmitter {
       //We store the segment in the buffers list
       this.recv_buffers.push({
         seqno: tcp.info.seqno,
-        payload: Buffer.from(packet.subarray(tcp.offset, tcp.offset + tcpDataLength)),
+        payload: (offset !== -1) ? Buffer.from(payload.subarray(0, offset)) : payload
       });
     }
     if (tcp.info.ackno && !is_sack) {
       this.flush_buffers(tcp.info.ackno ?? 0, "send");
     }
+  }
+
+  close() {
+      this.emit("end", this);
   }
 }
 function is_sack_in_header(buffer, ip, tcp) {

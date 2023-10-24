@@ -73,3 +73,15 @@ app.listen(port, config.get('listen_ip'), () => {
 })
 
 outputDelay(300)
+
+setInterval(
+    () => {
+        for (const key of Object.keys(teraSniffer.tcpTracker.sessions)) {
+            if (teraSniffer.tcpTracker.sessions[key].connection.inGame && Date.now() > teraSniffer.tcpTracker.sessions[key].last_use + (60 * 1000))
+                teraSniffer.tcpTracker.sessions[key].close()
+            else if (Date.now() > teraSniffer.tcpTracker.sessions[key].last_use + (10 * 60 * 1000))
+                teraSniffer.tcpTracker.sessions[key].close()
+        }
+    },
+    60 * 1000 //60 sec
+);

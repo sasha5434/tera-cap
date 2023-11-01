@@ -12,7 +12,6 @@ module.exports = function PacketsLogger(mod) {
 	let logUnkOnly = false;
 	let logPaste = false;
 	let hook = null;
-	let hookEnabled = false;
 	let searchExpr = null;
 
 	let blacklist = [];

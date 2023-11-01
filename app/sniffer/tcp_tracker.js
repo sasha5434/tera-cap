@@ -224,9 +224,9 @@ const TCPSession = class extends EventEmitter {
     //We apply the mask to remove unknown portions (probably can be fixed by implementing sack)
     if (flush_mask.includes(0)) {
       //console.log(flush_mask.toString("hex"));
-      if (buffers.length >= 50) {
+      if (buffers.length >= 10) {
         //clear buffers
-        while (buffers.length >= 50)
+        while (buffers.length >= 10)
           buffers.shift()
       }
       return null;

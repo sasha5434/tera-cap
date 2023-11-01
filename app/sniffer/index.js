@@ -16,7 +16,7 @@ const PktCapture = class extends EventEmitter {
     this.tcpTracker.on("session", (session) => {
       console.info(
         `[sniffer/pkt-capture] - Open session ${session.src} ${
-          session.is_ignored ? "(ingored) " : ""
+          session.is_ignored ? "(ignored) " : ""
         }(Total: ${Object.keys(this.tcpTracker.sessions).length})`
       );
       session.on("payload_recv", (data) => {
